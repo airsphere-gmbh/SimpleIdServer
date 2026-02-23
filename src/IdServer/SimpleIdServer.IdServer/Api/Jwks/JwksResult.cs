@@ -8,7 +8,7 @@ namespace SimpleIdServer.IdServer.Api.Jwks
 {
     public class JwksResult
     {
-        [JsonPropertyName("keys")]
+        [JsonPropertyName("keys"), Newtonsoft.Json.JsonProperty("keys")]
         public ICollection<JsonObject> JsonWebKeys { get; set; } = new List<JsonObject>();
     }
 }

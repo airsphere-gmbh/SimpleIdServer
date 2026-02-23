@@ -8,6 +8,6 @@ namespace SimpleIdServer.FastFed.IdentityProvider.Apis.Jwks;
 
 public class JwksResult
 {
-    [JsonPropertyName("keys")]
+    [JsonPropertyName("keys"), Newtonsoft.Json.JsonProperty("keys")]
     public List<JsonObject> JsonWebKeys { get; set; } = new List<JsonObject>();
 }

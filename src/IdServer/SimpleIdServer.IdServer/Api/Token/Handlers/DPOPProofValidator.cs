@@ -32,19 +32,21 @@ namespace SimpleIdServer.IdServer.Api.Token.Handlers
         public async Task Validate(HandlerContext context)
         {
             if (!context.Client.DPOPBoundAccessTokens) return;
-            if (!context.Request.HttpHeader.ContainsKey(Constants.DPOPHeaderName)) throw new OAuthException(ErrorCodes.INVALID_REQUEST, Global.MissingDpopProof);
-            var value = context.Request.HttpHeader[Constants.DPOPHeaderName];
+            var dpopHeader = context.Request.HttpHeader.FirstOrDefault(x => x.Key.Equals(Constants.DPOPHeaderName, StringComparison.InvariantCultureIgnoreCase)).Value;
+
+            if (dpopHeader == default) throw new OAuthException(ErrorCodes.INVALID_REQUEST, Global.MissingDpopProof);
             string dpopProof = null;
-            if (value is JsonArray)
+            switch (dpopHeader)
             {
-                var values = value as JsonArray;
-                if(values.Count > 1) throw new OAuthException(ErrorCodes.INVALID_REQUEST, Global.TooManyDpopHeader);
-                dpopProof = values.First().AsValue().GetValue<string>();
-            }
-            else
-            {
-                if (!(value is JsonValue)) throw new OAuthException(ErrorCodes.INVALID_REQUEST, Global.InvalidDpopHeader);
-                dpopProof = (context.Request.HttpHeader[Constants.DPOPHeaderName] as JsonValue).GetValue<string>();
+                case JsonArray values:
+                    if (values.Count > 1) throw new OAuthException(ErrorCodes.INVALID_REQUEST, Global.TooManyDpopHeader);
+                    dpopProof = values.First().AsValue().GetValue<string>();
+                    break;
+                case JsonValue value:
+                    dpopProof = value.GetValue<string>();
+                    break;
+                default:
+                    throw new OAuthException(ErrorCodes.INVALID_REQUEST, Global.InvalidDpopHeader);
             }
 
             var handler = new DPoPHandler();
