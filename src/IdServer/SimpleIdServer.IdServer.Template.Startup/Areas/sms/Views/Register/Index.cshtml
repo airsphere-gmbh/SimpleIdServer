@@ -1,0 +1,32 @@
+﻿@using SimpleIdServer.IdServer.Sms
+@using SimpleIdServer.IdServer.Sms.UI.ViewModels
+@using SimpleIdServer.IdServer.Template.Startup.Resources
+@using SimpleIdServer.IdServer.Template.Startup.ViewModels
+@using SimpleIdServer.IdServer.UI.ViewModels
+@using System.Text.Json
+@model SidWorkflowViewModel
+
+@{
+    var inputModel = JsonSerializer.Deserialize<RegisterSmsViewModel>(Model.Input);
+}
+
+@section CardTop {
+    <h4 class="card-title text-center mb-4">@RegisterSmsResource.title</h4>
+}
+
+<partial name="_OtpRegister" model="@(new OtpRegisterPartialViewModel
+{
+    Workflow = Model,
+    Input = inputModel,
+    Area = "sms",
+    SendConfirmationCodeFormId = StandardSmsRegisterForms.smsSendConfirmationCodeFormId,
+    RegisterFormId = StandardSmsRegisterForms.smsRegisterFormId,
+    Title = RegisterSmsResource.title,
+    ValueLabel = RegisterSmsResource.phonenumber,
+    ValuePlaceholder = RegisterSmsResource.phonenumber,
+    ValueInputType = "tel",
+    ConfirmationCodeLabel = RegisterSmsResource.confirmationcode,
+    ConfirmationCodePlaceholder = RegisterSmsResource.confirmationcode,
+    RegisterButtonLabel = RegisterSmsResource.register,
+    SendCodeButtonLabel = RegisterSmsResource.sendconfirmationcode
+})" />

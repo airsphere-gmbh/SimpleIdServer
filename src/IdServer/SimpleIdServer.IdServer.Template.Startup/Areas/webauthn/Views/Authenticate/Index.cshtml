@@ -1,0 +1,169 @@
+﻿@using FormBuilder.Helpers
+@using SimpleIdServer.IdServer.Fido
+@using SimpleIdServer.IdServer.Fido.UI.ViewModels
+@using SimpleIdServer.IdServer.Template.Startup.Resources
+@using SimpleIdServer.IdServer.UI.ViewModels
+@using System.Text.Json
+@model SidWorkflowViewModel
+
+@{
+    var makeAssertionsOptionsUrl = Url.Action("MakeAssertionOptions", "Authenticate", new { area = "webauthn" });
+    var authenticateUrl = Url.Action("Index", "Authenticate", new { area = "webauthn" });
+    var returnUrl = Model.Input[nameof(ISidStepViewModel.ReturnUrl)]?.ToString() ?? string.Empty;
+    var vm = JsonSerializer.Deserialize<AuthenticateWebauthnViewModel>(Model.Input.ToString());
+}
+
+@section CardTop {
+    <partial name="_WorkflowAuthTitle" model="@AuthenticateWebauthnResource.authenticate" />
+}
+
+<partial name="_WorkflowAuthAsyncError" />
+
+<div id="fido2Auth">
+    <form id="webauthForm" asp-area="webauthn" asp-controller="Authenticate" asp-action="Index" method="post">
+        @Html.AntiForgeryToken()
+
+        <input type="hidden" name="@nameof(ISidStepViewModel.ReturnUrl)" value="@returnUrl" />
+        <input type="hidden" name="@nameof(ISidStepViewModel.Realm)" value="@Model.Realm" />
+        <input type="hidden" name="@nameof(BaseAuthenticateViewModel.StepId)" value="@Model.CurrentStepId" />
+        <input type="hidden" name="@nameof(BaseAuthenticateViewModel.WorkflowId)" value="@Model.Workflow.Id" />
+        <input type="hidden" name="@nameof(BaseAuthenticateViewModel.CurrentLink)" value="@Model.Workflow.Links.Single(l => l.Source.EltId == StandardFidoAuthForms.webauthnFormId).Id" />
+        <input type="hidden" name="@nameof(IQRCodeAuthViewModel.SessionId)" />
+
+        <div class="mb-3">
+            <label class="form-label" for="Login">@AuthenticateWebauthnResource.login</label>
+            @if (!string.IsNullOrWhiteSpace(vm.Login) && (User.Identity.IsAuthenticated || vm.IsAuthInProgress))
+            {
+                <input id="Login" name="@nameof(BaseAuthenticateViewModel.Login)" class="form-control" value="@vm.Login" disabled />
+                <input type="hidden" name="@nameof(BaseAuthenticateViewModel.Login)" value="@vm.Login" />
+            }
+            else
+            {
+                <input id="Login" name="@nameof(BaseAuthenticateViewModel.Login)" class="form-control" autocomplete="on" value="@vm.Login" required />
+            }
+        </div>
+
+        <div class="d-grid">
+            <button type="submit" class="btn btn-primary">@AuthenticateWebauthnResource.authenticate</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_WorkflowAuthAsyncErrorScripts" />
+    <script type="text/javascript">
+        var init = function () {
+            var beginLoginUrl = "@vm.BeginLoginUrl";
+            var endLoginUrl = "@vm.EndLoginUrl";
+            var makeAssertionsUrl = "@makeAssertionsOptionsUrl";
+            var authenticateUrl = "@authenticateUrl";
+            var isInitialized = false;
+
+            var toggleBtn = function (isDisabled) {
+                $("#fido2Auth button[type='submit']").attr('disabled', isDisabled);
+            }
+
+            var displayError = function (errorJson) {
+                window.sidWorkflowAuth.displayError(errorJson);
+            }
+
+            var tryListenForm = function () {
+                const elt = $("#webauthForm");
+                if (isInitialized === true) return;
+                if (elt.length === 0) {
+                    setTimeout(() => tryListenForm(), 500);
+                    return;
+                }
+
+                isInitialized = true;
+                elt.submit(function (e) {
+                    e.preventDefault();
+                    makeAssertionOptions(convertFormToJSON($(e.target)));
+                });
+            }
+
+            async function makeAssertion(credential, form, sessionId) {
+                let authData = new Uint8Array(credential.response.authenticatorData);
+                let clientDataJSON = new Uint8Array(credential.response.clientDataJSON);
+                let rawId = new Uint8Array(credential.rawId);
+                let sig = new Uint8Array(credential.response.signature);
+                const assertion = {
+                    id: credential.id,
+                    rawId: coerceToBase64Url(rawId),
+                    type: credential.type,
+                    extensions: credential.getClientExtensionResults(),
+                    response: {
+                        authenticatorData: coerceToBase64Url(authData),
+                        clientDataJSON: coerceToBase64Url(clientDataJSON),
+                        signature: coerceToBase64Url(sig)
+                    }
+                };
+                let response = await fetch(endLoginUrl, {
+                    method: 'POST',
+                    body: JSON.stringify({ login: form.Login, session_id: sessionId, assertion: assertion }),
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (!response.ok) {
+                    const json = await response.json();
+                    toggleBtn(false);
+                    displayError(json);
+                    return;
+                }
+
+
+                $("#webauthForm").unbind("submit");
+                $("#webauthForm input[name='SessionId']").val(sessionId);
+                $("#webauthForm input[name='Login']").removeAttr('disabled');
+                $("#webauthForm").trigger("submit");
+            }
+
+            async function makeAssertionOptions(form) {
+                window.sidWorkflowAuth.clearError();
+                toggleBtn(true);
+                let response = await fetch(beginLoginUrl, {
+                    method: 'POST',
+                    body: JSON.stringify({ login: form.Login, credential_type: 'webauthn' }),
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    }
+                });
+                const json = await response.json();
+                if (!response.ok) {
+                    toggleBtn(false);
+                    displayError(json);
+                    return;
+                }
+
+                const makeAssertionOptions = json["assertion"];
+                const sessionId = json["session_id"];
+                const challenge = makeAssertionOptions.challenge.replace(/-/g, "+").replace(/_/g, "/");
+                makeAssertionOptions.challenge = Uint8Array.from(atob(challenge), c => c.charCodeAt(0));
+                makeAssertionOptions.allowCredentials.forEach(function (listItem) {
+                    var fixedId = listItem.id.replace(/\_/g, "/").replace(/\-/g, "+");
+                    listItem.id = Uint8Array.from(atob(fixedId), c => c.charCodeAt(0));
+                });
+                let credential;
+                try {
+                    credential = await navigator.credentials.get({ publicKey: makeAssertionOptions })
+                } catch (err) {
+                    console.error(err);
+                    toggleBtn(false);
+                    return;
+                }
+
+                await makeAssertion(credential, form, sessionId);
+            }
+
+            tryListenForm();
+        };
+
+        $(document).ready(function () {
+            init();
+        });
+    </script>
+}

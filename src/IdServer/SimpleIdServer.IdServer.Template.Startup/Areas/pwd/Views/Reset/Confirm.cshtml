@@ -1,0 +1,72 @@
+﻿@using SimpleIdServer.IdServer.Pwd
+@using SimpleIdServer.IdServer.Pwd.UI.ViewModels
+@using SimpleIdServer.IdServer.Template.Startup.Resources
+@using SimpleIdServer.IdServer.UI.ViewModels
+@using System.Text.Json
+@model SidWorkflowViewModel
+
+@{
+    var inputModel = JsonSerializer.Deserialize<ConfirmResetPasswordViewModel>(Model.Input);
+}
+
+@section CardTop {
+    <h4 class="card-title text-center mb-4">@ConfirmResetPasswordResource.title</h4>
+}
+
+@if (!inputModel.IsPasswordUpdated)
+{
+    <form method="post" asp-area="pwd" asp-controller="Reset" asp-action="Confirm">
+        @Html.AntiForgeryToken()
+
+        <!-- Hidden fields -->
+        <input type="hidden" name="@nameof(ConfirmResetPasswordViewModel.ReturnUrl)" value="@inputModel.ReturnUrl" />
+        <input type="hidden" name="@nameof(ConfirmResetPasswordViewModel.Realm)" value="@Model.Realm" />
+        <input type="hidden" name="@nameof(ConfirmResetPasswordViewModel.WorkflowId)" value="@Model.Workflow.Id" />
+        <input type="hidden" name="@nameof(ConfirmResetPasswordViewModel.StepId)" value="@Model.CurrentStepId" />
+        <input type="hidden" name="@nameof(ConfirmResetPasswordViewModel.CurrentLink)" value="@Model.Workflow.Links.Single(l => l.Source.EltId == StandardPwdAuthForms.confirmResetPwdFormId).Id" />
+
+        <!-- Destination field (disabled) -->
+        <div class="mb-3">
+            <label class="form-label">@ConfirmResetPasswordResource.login</label>
+            <input name="@nameof(ConfirmResetPasswordViewModel.Destination)" type="text" class="form-control" value="@inputModel.Destination" disabled />
+            <input type="hidden" name="@nameof(ConfirmResetPasswordViewModel.Destination)" value="@inputModel.Destination" />
+        </div>
+
+        <!-- Code field (disabled) -->
+        <div class="mb-3">
+            <label class="form-label">@ConfirmResetPasswordResource.code</label>
+            <input name="Code_display" type="text" class="form-control" value="@inputModel.Code" disabled />
+            <input type="hidden" name="@nameof(ConfirmResetPasswordViewModel.Code)" value="@inputModel.Code" />
+        </div>
+
+        <!-- Password field -->
+        <div class="mb-3">
+            <label class="form-label">@ConfirmResetPasswordResource.password</label>
+            <input name="@nameof(ConfirmResetPasswordViewModel.Password)" type="password" class="form-control" placeholder="@ConfirmResetPasswordResource.password" required />
+        </div>
+
+        <!-- Confirmation Password field -->
+        <div class="mb-3">
+            <label class="form-label">@ConfirmResetPasswordResource.repeat_password</label>
+            <input name="@nameof(ConfirmResetPasswordViewModel.ConfirmationPassword)" type="password" class="form-control" placeholder="@ConfirmResetPasswordResource.repeat_password" required />
+        </div>
+
+        <!-- Submit button -->
+        <div class="d-grid mb-3">
+            <button type="submit" class="btn btn-primary btn-lg">
+                @ConfirmResetPasswordResource.update
+            </button>
+        </div>
+    </form>
+}
+else
+{
+    <div class="alert alert-success" role="alert">
+        @ConfirmResetPasswordResource.password_updated
+    </div>
+
+    <!-- Back link -->
+    <div class="text-center">
+        <a href="@inputModel.ReturnUrl" class="btn btn-primary">Back</a>
+    </div>
+}

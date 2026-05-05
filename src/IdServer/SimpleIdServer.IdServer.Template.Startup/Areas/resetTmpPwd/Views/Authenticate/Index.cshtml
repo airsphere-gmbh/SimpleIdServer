@@ -1,0 +1,44 @@
+﻿@using SimpleIdServer.IdServer.Pwd
+@using SimpleIdServer.IdServer.Pwd.UI.ViewModels
+@using SimpleIdServer.IdServer.Template.Startup.Resources
+@using SimpleIdServer.IdServer.UI.ViewModels
+@using System.Text.Json
+@model SidWorkflowViewModel
+
+@{
+    var inputModel = JsonSerializer.Deserialize<ResetPasswordViewModel>(Model.Input);
+}
+
+@section CardTop {
+    <h4 class="card-title text-center mb-4">@ResetPasswordResource.title</h4>
+}
+
+<form method="post" asp-area="resetTmpPwd" asp-controller="Authenticate" asp-action="Index">
+    @Html.AntiForgeryToken()
+
+    <!-- Hidden fields -->
+    <input type="hidden" name="@nameof(ResetPasswordViewModel.ReturnUrl)" value="@inputModel.ReturnUrl" />
+    <input type="hidden" name="@nameof(ResetPasswordViewModel.Realm)" value="@Model.Realm" />
+    <input type="hidden" name="@nameof(ResetPasswordViewModel.WorkflowId)" value="@Model.Workflow.Id" />
+    <input type="hidden" name="@nameof(ResetPasswordViewModel.StepId)" value="@Model.CurrentStepId" />
+    <input type="hidden" name="@nameof(ResetPasswordViewModel.CurrentLink)" value="@Model.Workflow.Links.Single(l => l.Source.EltId == StandardPwdAuthForms.pwdResetFormId).Id" />
+
+    <!-- Login field -->
+    <div class="mb-3">
+        <label class="form-label">@ResetPasswordResource.login</label>
+        <input name="@nameof(ResetPasswordViewModel.Login)" type="text" class="form-control" placeholder="@ResetPasswordResource.login" value="@inputModel.Login" required autofocus />
+    </div>
+
+    <!-- Email field -->
+    <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input name="@nameof(ResetPasswordViewModel.Value)" type="email" class="form-control" placeholder="Email" value="@inputModel.Value" required />
+    </div>
+
+    <!-- Submit button -->
+    <div class="d-grid mb-3">
+        <button type="submit" class="btn btn-primary btn-lg">
+            @ResetPasswordResource.send_link
+        </button>
+    </div>
+</form>

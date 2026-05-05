@@ -1,0 +1,32 @@
+﻿@using SimpleIdServer.IdServer.Email
+@using SimpleIdServer.IdServer.Email.UI.ViewModels
+@using SimpleIdServer.IdServer.Template.Startup.Resources
+@using SimpleIdServer.IdServer.Template.Startup.ViewModels
+@using SimpleIdServer.IdServer.UI.ViewModels
+@using System.Text.Json
+@model SidWorkflowViewModel
+
+@{
+    var inputModel = JsonSerializer.Deserialize<RegisterEmailViewModel>(Model.Input);
+}
+
+@section CardTop {
+    <h4 class="card-title text-center mb-4">@RegisterEmailResource.title</h4>
+}
+
+<partial name="_OtpRegister" model="@(new OtpRegisterPartialViewModel
+{
+    Workflow = Model,
+    Input = inputModel,
+    Area = "email",
+    SendConfirmationCodeFormId = StandardEmailRegistrationForms.emailSendConfirmationCodeFormId,
+    RegisterFormId = StandardEmailRegistrationForms.emailRegisterFormId,
+    Title = RegisterEmailResource.title,
+    ValueLabel = RegisterEmailResource.email,
+    ValuePlaceholder = RegisterEmailResource.email,
+    ValueInputType = "email",
+    ConfirmationCodeLabel = RegisterEmailResource.confirmationcode,
+    ConfirmationCodePlaceholder = RegisterEmailResource.confirmationcode,
+    RegisterButtonLabel = RegisterEmailResource.register,
+    SendCodeButtonLabel = RegisterEmailResource.sendconfirmationcode
+})" />

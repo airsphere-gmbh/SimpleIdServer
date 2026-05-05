@@ -38,6 +38,7 @@ public static class WebApplicationExtensions
         }
 
         webApplication.MapBlazorHub();
+        webApplication.UseFormBuilder();
         webApplication.UseSidRequestLocalization();
         webApplication.UseMiddleware<LanguageMiddleware>();
         webApplication.UseCookiePolicy(new CookiePolicyOptions
@@ -255,6 +256,9 @@ public static class WebApplicationExtensions
         webApplication.SidMapControllerRoute("updateUserCredential",
             pattern: (usePrefix ? "{prefix}/" : string.Empty) + DefaultEndpoints.Users + "/{id}/credentials/{credentialId}",
             defaults: new { controller = "Users", action = "UpdateCredential" });
+        webApplication.SidMapControllerRoute("updatePasswordCredential",
+            pattern: (usePrefix ? "{prefix}/" : string.Empty) + DefaultEndpoints.Users + "/{id}/pwd",
+            defaults: new { controller = "Users", action = "UpdatePasswordCredential" });
         webApplication.SidMapControllerRoute("deleteUserCredential",
             pattern: (usePrefix ? "{prefix}/" : string.Empty) + DefaultEndpoints.Users + "/{id}/credentials/{credentialId}",
             defaults: new { controller = "Users", action = "DeleteCredential" });
@@ -689,13 +693,14 @@ public static class WebApplicationExtensions
 
         webApplication.MapControllerRoute(
             name: "defaultWithArea",
-            pattern: (usePrefix ? "{prefix}/" : string.Empty) + "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+            pattern: (usePrefix ? "{prefix}/" : string.Empty) + "{area:exists}/{controller=Home}/{action=Index}/{id?}",
+            constraints: new { controller = new NotEqualConstraint("Registration", "ExternalAuthenticate") });
         webApplication.MapControllerRoute(
             name: "default",
             pattern: (usePrefix ? "{prefix}/" : string.Empty) + "{controller=Home}/{action=Index}/{id?}",
             constraints: new { controller = new NotEqualConstraint("Sessions") });
 
-        if(usePrefix)
+        if (usePrefix)
         {
             webApplication.MapControllerRoute(
                name: "getSessions",

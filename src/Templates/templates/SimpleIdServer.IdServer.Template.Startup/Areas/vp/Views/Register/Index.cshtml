@@ -1,0 +1,169 @@
+﻿@using SimpleIdServer.IdServer.Template.Startup.Resources
+@using SimpleIdServer.IdServer.UI.ViewModels
+@using SimpleIdServer.IdServer.VerifiablePresentation
+@using SimpleIdServer.IdServer.VerifiablePresentation.UI.ViewModels
+@using System.Text.Json
+@model SidWorkflowViewModel
+
+@{
+    var inputViewModel = JsonSerializer.Deserialize<VerifiablePresentationRegisterViewModel>(Model.Input.ToString());
+    var returnUrl = Model.Input[nameof(ISidStepViewModel.ReturnUrl)]?.ToString() ?? string.Empty;
+    var qrCodeUrl = inputViewModel.QrCodeUrl;
+    var statusUrl = inputViewModel.StatusUrl;
+    var endRegisterUrl = inputViewModel.EndRegisterUrl;
+}
+
+@section CardTop {
+    <partial name="_WorkflowAuthTitle" model="@RegisterVpResource.title" />
+}
+
+<partial name="_WorkflowAuthAsyncError" />
+
+<div id="generateQrCodeForm">
+    @if (inputViewModel.VerifiablePresentations != null && inputViewModel.VerifiablePresentations.Any())
+    {
+        @foreach (var vp in inputViewModel.VerifiablePresentations)
+        {
+            <form class="vpRegister mb-3" asp-area="vp" asp-controller="Register" asp-action="Index" method="post">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" name="id" value="@vp.Id" />
+                <input type="hidden" name="@nameof(ISidStepViewModel.ReturnUrl)" value="@returnUrl" />
+                <input type="hidden" name="@nameof(ISidStepViewModel.Realm)" value="@Model.Realm" />
+                <input type="hidden" name="@nameof(VerifiablePresentationRegisterViewModel.StepId)" value="@Model.CurrentStepId" />
+                <input type="hidden" name="@nameof(VerifiablePresentationRegisterViewModel.WorkflowId)" value="@Model.Workflow.Id" />
+                <input type="hidden" name="@nameof(VerifiablePresentationRegisterViewModel.CurrentLink)" value="@Model.Workflow.Links.Single(l => l.Source.EltId == StandardVpRegisterForms.vpRegistrationFormId).Id" />
+
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">@vp.Name</h5>
+                        @if (vp.VcNames != null && vp.VcNames.Any())
+                        {
+                            <ul class="list-unstyled mb-3">
+                                @foreach (var vcName in vp.VcNames)
+                                {
+                                    <li><small class="text-muted">@vcName</small></li>
+                                }
+                            </ul>
+                        }
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">@RegisterVpResource.register</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        }
+    }
+</div>
+
+<div id="qrCodeContainer" class="mt-4" style="display: none !important; text-align: center;">
+    <h5 class="mb-3">@RegisterVpResource.scan_mobileapp</h5>
+    <div class="picture-container">
+        <img src="" class="img-fluid" alt="image" />
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_WorkflowAuthAsyncErrorScripts" />
+    <script type="text/javascript">
+        var isInitialized = false;
+
+        var init = function () {
+            var getQrCodeUrl = "@qrCodeUrl";
+            var statusUrl = "@statusUrl";
+            var endRegisterURL = "@endRegisterUrl";
+
+            var displayError = function (errorJson) {
+                window.sidWorkflowAuth.displayError(errorJson);
+            }
+
+            var viewQrCode = function (img) {
+                $("#generateQrCodeForm").attr("style", "display: none !important");
+                $("#qrCodeContainer").css("display", "");
+                $("#qrCodeContainer img").attr("src", img);
+            }
+
+            var displaySuccessMessage = function () {
+                window.sidWorkflowAuth.clearError();
+                $("#generateQrCodeForm").attr("style", "display: none !important");
+                $("#qrCodeContainer").attr("style", "display: none !important");
+            }
+
+            async function register(state) {
+                let response = await fetch(endRegisterURL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        state: state
+                    }),
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                let responseJson = await response.json();
+                if (!responseJson.next_registration_url) {
+                    displaySuccessMessage();
+                } else {
+                    window.location.href = responseJson.next_registration_url;
+                }
+            }
+
+            async function checkStatus(state) {
+                setTimeout(async function () {
+                    let response = await fetch(statusUrl + "/" + state, {
+                        method: 'GET'
+                    });
+                    if (!response.ok) {
+                        let responseJson = await response.json();
+                        displayError(responseJson);
+                        await checkStatus(state);
+                        return;
+                    }
+
+                    register(state);
+                }, 1000);
+            }
+
+            async function displayQrCode(id) {
+                window.sidWorkflowAuth.clearError();
+                let response = await fetch(getQrCodeUrl + "/" + id, {
+                    method: 'GET'
+                });
+                if (!response.ok) {
+                    const json = await response.json();
+                    displayError(json);
+                    return;
+                }
+
+                const state = response.headers.get('state');
+                const blob = await response.blob();
+                const img = URL.createObjectURL(blob);
+                viewQrCode(img);
+                await checkStatus(state);
+            }
+
+            var tryListenForm = function () {
+                const elt = $(".vpRegister");
+                if (isInitialized === true) return;
+                if (elt.length === 0) {
+                    setTimeout(() => tryListenForm(), 500);
+                    return;
+                }
+
+                isInitialized = true;
+                elt.submit(function (e) {
+                    e.preventDefault();
+                    var id = $(e.target).find("input[name='id']").val();
+                    displayQrCode(id);
+                });
+            }
+
+            tryListenForm();
+        }
+
+        $(document).ready(function() {
+            init();
+        });
+    </script>
+}

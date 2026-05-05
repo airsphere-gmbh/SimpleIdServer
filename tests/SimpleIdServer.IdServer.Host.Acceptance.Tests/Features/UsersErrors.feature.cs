@@ -539,6 +539,432 @@ this.ScenarioInitialize(scenarioInfo);
             this.ScenarioCleanup();
         }
         
+        [Xunit.SkippableFactAttribute(DisplayName="access token must be passed (HTTP PUT Password)")]
+        [Xunit.TraitAttribute("FeatureTitle", "UsersErrors")]
+        [Xunit.TraitAttribute("Description", "access token must be passed (HTTP PUT Password)")]
+        public void AccessTokenMustBePassedHTTPPUTPassword()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
+            TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("access token must be passed (HTTP PUT Password)", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 134
+this.ScenarioInitialize(scenarioInfo);
+#line hidden
+            if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                testRunner.SkipScenario();
+            }
+            else
+            {
+                this.ScenarioStart();
+                TechTalk.SpecFlow.Table table620 = new TechTalk.SpecFlow.Table(new string[] {
+                            "Key",
+                            "Value"});
+#line 135
+ testRunner.When("execute HTTP PUT JSON request \'http://localhost/users/id/pwd\'", ((string)(null)), table620, "When ");
+#line hidden
+#line 138
+ testRunner.And("extract JSON from body", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+#line 140
+ testRunner.Then("JSON \'error\'=\'access_denied\'", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
+#line hidden
+#line 141
+ testRunner.And("JSON \'error_description\'=\'missing token\'", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+            }
+            this.ScenarioCleanup();
+        }
+        
+        [Xunit.SkippableFactAttribute(DisplayName="value is required to update password")]
+        [Xunit.TraitAttribute("FeatureTitle", "UsersErrors")]
+        [Xunit.TraitAttribute("Description", "value is required to update password")]
+        public void ValueIsRequiredToUpdatePassword()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
+            TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("value is required to update password", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 143
+this.ScenarioInitialize(scenarioInfo);
+#line hidden
+            if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                testRunner.SkipScenario();
+            }
+            else
+            {
+                this.ScenarioStart();
+                TechTalk.SpecFlow.Table table621 = new TechTalk.SpecFlow.Table(new string[] {
+                            "Key",
+                            "Value"});
+                table621.AddRow(new string[] {
+                            "client_id",
+                            "fiftySevenClient"});
+                table621.AddRow(new string[] {
+                            "client_secret",
+                            "password"});
+                table621.AddRow(new string[] {
+                            "scope",
+                            "users"});
+                table621.AddRow(new string[] {
+                            "grant_type",
+                            "client_credentials"});
+#line 144
+ testRunner.When("execute HTTP POST request \'http://localhost/token\'", ((string)(null)), table621, "When ");
+#line hidden
+#line 151
+ testRunner.And("extract JSON from body", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+#line 152
+ testRunner.And("extract parameter \'access_token\' from JSON body", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+                TechTalk.SpecFlow.Table table622 = new TechTalk.SpecFlow.Table(new string[] {
+                            "Key",
+                            "Value"});
+                table622.AddRow(new string[] {
+                            "Authorization",
+                            "Bearer $access_token$"});
+#line 154
+ testRunner.When("execute HTTP PUT JSON request \'http://localhost/users/id/pwd\'", ((string)(null)), table622, "When ");
+#line hidden
+#line 158
+ testRunner.And("extract JSON from body", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+#line 160
+ testRunner.Then("JSON \'error\'=\'invalid_request\'", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
+#line hidden
+#line 161
+ testRunner.And("JSON \'error_description\'=\'missing parameter value\'", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+            }
+            this.ScenarioCleanup();
+        }
+        
+        [Xunit.SkippableFactAttribute(DisplayName="old_value is required to update password")]
+        [Xunit.TraitAttribute("FeatureTitle", "UsersErrors")]
+        [Xunit.TraitAttribute("Description", "old_value is required to update password")]
+        public void Old_ValueIsRequiredToUpdatePassword()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
+            TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("old_value is required to update password", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 163
+this.ScenarioInitialize(scenarioInfo);
+#line hidden
+            if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                testRunner.SkipScenario();
+            }
+            else
+            {
+                this.ScenarioStart();
+                TechTalk.SpecFlow.Table table623 = new TechTalk.SpecFlow.Table(new string[] {
+                            "Key",
+                            "Value"});
+                table623.AddRow(new string[] {
+                            "client_id",
+                            "fiftySevenClient"});
+                table623.AddRow(new string[] {
+                            "client_secret",
+                            "password"});
+                table623.AddRow(new string[] {
+                            "scope",
+                            "users"});
+                table623.AddRow(new string[] {
+                            "grant_type",
+                            "client_credentials"});
+#line 164
+ testRunner.When("execute HTTP POST request \'http://localhost/token\'", ((string)(null)), table623, "When ");
+#line hidden
+#line 171
+ testRunner.And("extract JSON from body", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+#line 172
+ testRunner.And("extract parameter \'access_token\' from JSON body", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+                TechTalk.SpecFlow.Table table624 = new TechTalk.SpecFlow.Table(new string[] {
+                            "Key",
+                            "Value"});
+                table624.AddRow(new string[] {
+                            "Authorization",
+                            "Bearer $access_token$"});
+                table624.AddRow(new string[] {
+                            "value",
+                            "NewPassword1!"});
+#line 174
+ testRunner.When("execute HTTP PUT JSON request \'http://localhost/users/id/pwd\'", ((string)(null)), table624, "When ");
+#line hidden
+#line 179
+ testRunner.And("extract JSON from body", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+#line 181
+ testRunner.Then("JSON \'error\'=\'invalid_request\'", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
+#line hidden
+#line 182
+ testRunner.And("JSON \'error_description\'=\'missing parameter old_value\'", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+            }
+            this.ScenarioCleanup();
+        }
+        
+        [Xunit.SkippableFactAttribute(DisplayName="cannot update password when user doesn\'t exist")]
+        [Xunit.TraitAttribute("FeatureTitle", "UsersErrors")]
+        [Xunit.TraitAttribute("Description", "cannot update password when user doesn\'t exist")]
+        public void CannotUpdatePasswordWhenUserDoesntExist()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
+            TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("cannot update password when user doesn\'t exist", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 184
+this.ScenarioInitialize(scenarioInfo);
+#line hidden
+            if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                testRunner.SkipScenario();
+            }
+            else
+            {
+                this.ScenarioStart();
+                TechTalk.SpecFlow.Table table625 = new TechTalk.SpecFlow.Table(new string[] {
+                            "Key",
+                            "Value"});
+                table625.AddRow(new string[] {
+                            "client_id",
+                            "fiftySevenClient"});
+                table625.AddRow(new string[] {
+                            "client_secret",
+                            "password"});
+                table625.AddRow(new string[] {
+                            "scope",
+                            "users"});
+                table625.AddRow(new string[] {
+                            "grant_type",
+                            "client_credentials"});
+#line 185
+ testRunner.When("execute HTTP POST request \'http://localhost/token\'", ((string)(null)), table625, "When ");
+#line hidden
+#line 192
+ testRunner.And("extract JSON from body", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+#line 193
+ testRunner.And("extract parameter \'access_token\' from JSON body", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+                TechTalk.SpecFlow.Table table626 = new TechTalk.SpecFlow.Table(new string[] {
+                            "Key",
+                            "Value"});
+                table626.AddRow(new string[] {
+                            "Authorization",
+                            "Bearer $access_token$"});
+                table626.AddRow(new string[] {
+                            "old_value",
+                            "oldpassword"});
+                table626.AddRow(new string[] {
+                            "value",
+                            "NewPassword1!"});
+#line 195
+ testRunner.When("execute HTTP PUT JSON request \'http://localhost/users/unknownid/pwd\'", ((string)(null)), table626, "When ");
+#line hidden
+#line 201
+ testRunner.Then("HTTP status code equals to \'404\'", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
+#line hidden
+            }
+            this.ScenarioCleanup();
+        }
+        
+        [Xunit.SkippableFactAttribute(DisplayName="cannot update password when user has no active password credential")]
+        [Xunit.TraitAttribute("FeatureTitle", "UsersErrors")]
+        [Xunit.TraitAttribute("Description", "cannot update password when user has no active password credential")]
+        public void CannotUpdatePasswordWhenUserHasNoActivePasswordCredential()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
+            TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("cannot update password when user has no active password credential", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 203
+this.ScenarioInitialize(scenarioInfo);
+#line hidden
+            if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                testRunner.SkipScenario();
+            }
+            else
+            {
+                this.ScenarioStart();
+                TechTalk.SpecFlow.Table table627 = new TechTalk.SpecFlow.Table(new string[] {
+                            "Key",
+                            "Value"});
+                table627.AddRow(new string[] {
+                            "client_id",
+                            "fiftySevenClient"});
+                table627.AddRow(new string[] {
+                            "client_secret",
+                            "password"});
+                table627.AddRow(new string[] {
+                            "scope",
+                            "users"});
+                table627.AddRow(new string[] {
+                            "grant_type",
+                            "client_credentials"});
+#line 204
+ testRunner.When("execute HTTP POST request \'http://localhost/token\'", ((string)(null)), table627, "When ");
+#line hidden
+#line 211
+ testRunner.And("extract JSON from body", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+#line 212
+ testRunner.And("extract parameter \'access_token\' from JSON body", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+                TechTalk.SpecFlow.Table table628 = new TechTalk.SpecFlow.Table(new string[] {
+                            "Key",
+                            "Value"});
+                table628.AddRow(new string[] {
+                            "Authorization",
+                            "Bearer $access_token$"});
+                table628.AddRow(new string[] {
+                            "name",
+                            "userWithoutPwd"});
+#line 214
+ testRunner.And("execute HTTP POST JSON request \'http://localhost/users\'", ((string)(null)), table628, "And ");
+#line hidden
+#line 219
+ testRunner.And("extract JSON from body", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+#line 220
+ testRunner.And("extract parameter \'id\' from JSON body", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+                TechTalk.SpecFlow.Table table629 = new TechTalk.SpecFlow.Table(new string[] {
+                            "Key",
+                            "Value"});
+                table629.AddRow(new string[] {
+                            "Authorization",
+                            "Bearer $access_token$"});
+                table629.AddRow(new string[] {
+                            "old_value",
+                            "oldpassword"});
+                table629.AddRow(new string[] {
+                            "value",
+                            "NewPassword1!"});
+#line 222
+ testRunner.When("execute HTTP PUT JSON request \'http://localhost/users/$id$/pwd\'", ((string)(null)), table629, "When ");
+#line hidden
+#line 228
+ testRunner.And("extract JSON from body", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+#line 230
+ testRunner.Then("JSON \'error\'=\'invalid_request\'", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
+#line hidden
+#line 231
+ testRunner.And("JSON \'error_description\'=\'no active password credential found for this user\'", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+            }
+            this.ScenarioCleanup();
+        }
+        
+        [Xunit.SkippableFactAttribute(DisplayName="cannot update password when old password is invalid")]
+        [Xunit.TraitAttribute("FeatureTitle", "UsersErrors")]
+        [Xunit.TraitAttribute("Description", "cannot update password when old password is invalid")]
+        public void CannotUpdatePasswordWhenOldPasswordIsInvalid()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
+            TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("cannot update password when old password is invalid", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 233
+this.ScenarioInitialize(scenarioInfo);
+#line hidden
+            if ((TagHelper.ContainsIgnoreTag(tagsOfScenario) || TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                testRunner.SkipScenario();
+            }
+            else
+            {
+                this.ScenarioStart();
+                TechTalk.SpecFlow.Table table630 = new TechTalk.SpecFlow.Table(new string[] {
+                            "Key",
+                            "Value"});
+                table630.AddRow(new string[] {
+                            "client_id",
+                            "fiftySevenClient"});
+                table630.AddRow(new string[] {
+                            "client_secret",
+                            "password"});
+                table630.AddRow(new string[] {
+                            "scope",
+                            "users"});
+                table630.AddRow(new string[] {
+                            "grant_type",
+                            "client_credentials"});
+#line 234
+ testRunner.When("execute HTTP POST request \'http://localhost/token\'", ((string)(null)), table630, "When ");
+#line hidden
+#line 241
+ testRunner.And("extract JSON from body", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+#line 242
+ testRunner.And("extract parameter \'access_token\' from JSON body", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+                TechTalk.SpecFlow.Table table631 = new TechTalk.SpecFlow.Table(new string[] {
+                            "Key",
+                            "Value"});
+                table631.AddRow(new string[] {
+                            "Authorization",
+                            "Bearer $access_token$"});
+                table631.AddRow(new string[] {
+                            "name",
+                            "userWithPwd"});
+#line 244
+ testRunner.And("execute HTTP POST JSON request \'http://localhost/users\'", ((string)(null)), table631, "And ");
+#line hidden
+#line 249
+ testRunner.And("extract JSON from body", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+#line 250
+ testRunner.And("extract parameter \'id\' from JSON body", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+                TechTalk.SpecFlow.Table table632 = new TechTalk.SpecFlow.Table(new string[] {
+                            "Key",
+                            "Value"});
+                table632.AddRow(new string[] {
+                            "Authorization",
+                            "Bearer $access_token$"});
+                table632.AddRow(new string[] {
+                            "credential",
+                            "{ \"type\": \"pwd\", \"value\": \"Password1!\" }"});
+                table632.AddRow(new string[] {
+                            "active",
+                            "true"});
+#line 252
+ testRunner.And("execute HTTP POST JSON request \'http://localhost/users/$id$/credentials\'", ((string)(null)), table632, "And ");
+#line hidden
+                TechTalk.SpecFlow.Table table633 = new TechTalk.SpecFlow.Table(new string[] {
+                            "Key",
+                            "Value"});
+                table633.AddRow(new string[] {
+                            "Authorization",
+                            "Bearer $access_token$"});
+                table633.AddRow(new string[] {
+                            "old_value",
+                            "wrongpassword"});
+                table633.AddRow(new string[] {
+                            "value",
+                            "NewPassword1!"});
+#line 258
+ testRunner.When("execute HTTP PUT JSON request \'http://localhost/users/$id$/pwd\'", ((string)(null)), table633, "When ");
+#line hidden
+#line 264
+ testRunner.And("extract JSON from body", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+#line 266
+ testRunner.Then("HTTP status code equals to \'400\'", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
+#line hidden
+#line 267
+ testRunner.And("JSON \'error\'=\'invalid_request\'", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+#line 268
+ testRunner.And("JSON \'error_description\'=\'the old password is invalid\'", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line hidden
+            }
+            this.ScenarioCleanup();
+        }
+        
         [System.CodeDom.Compiler.GeneratedCodeAttribute("TechTalk.SpecFlow", "3.9.0.0")]
         [System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
         public class FixtureData : System.IDisposable

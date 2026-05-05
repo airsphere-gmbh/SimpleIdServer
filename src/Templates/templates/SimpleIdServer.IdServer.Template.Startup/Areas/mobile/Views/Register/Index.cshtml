@@ -1,0 +1,154 @@
+﻿@using SimpleIdServer.IdServer.Fido
+@using SimpleIdServer.IdServer.Fido.UI.ViewModels
+@using SimpleIdServer.IdServer.Template.Startup.Resources
+@using SimpleIdServer.IdServer.UI.ViewModels
+@using System.Text.Json
+@model SidWorkflowViewModel
+
+@{
+    var inputViewModel = JsonSerializer.Deserialize<RegisterMobileViewModel>(Model.Input.ToString());
+    var returnUrl = Model.Input[nameof(ISidStepViewModel.ReturnUrl)]?.ToString() ?? string.Empty;
+    var beginRegisterUrl = inputViewModel.BeginRegisterUrl;
+    var registerStatusUrl = inputViewModel.RegisterStatusUrl;
+}
+
+@section CardTop {
+    <partial name="_WorkflowAuthTitle" model="@AuthenticateMobileResource.register_title" />
+}
+
+<partial name="_WorkflowAuthAsyncError" />
+
+<form id="generateQrCodeForm" asp-area="mobile" asp-controller="Register" asp-action="Index" method="post">
+    @Html.AntiForgeryToken()
+
+    <input type="hidden" name="@nameof(ISidStepViewModel.ReturnUrl)" value="@returnUrl" />
+    <input type="hidden" name="@nameof(ISidStepViewModel.Realm)" value="@Model.Realm" />
+    <input type="hidden" name="@nameof(RegisterMobileViewModel.StepId)" value="@Model.CurrentStepId" />
+    <input type="hidden" name="@nameof(RegisterMobileViewModel.WorkflowId)" value="@Model.Workflow.Id" />
+    <input type="hidden" name="@nameof(RegisterMobileViewModel.CurrentLink)" value="@Model.Workflow.Links.Single(l => l.Source.EltId == StandardFidoRegisterForms.mobileFormId).Id" />
+
+    <div class="mb-3">
+        <label class="form-label" for="Login">@AuthenticateMobileResource.login</label>
+        @if (!string.IsNullOrWhiteSpace(inputViewModel.Login) && User.Identity.IsAuthenticated)
+        {
+            <input id="Login" name="@nameof(RegisterMobileViewModel.Login)" class="form-control" value="@inputViewModel.Login" disabled />
+            <input type="hidden" name="@nameof(RegisterMobileViewModel.Login)" value="@inputViewModel.Login" />
+        }
+        else
+        {
+            <input id="Login" name="@nameof(RegisterMobileViewModel.Login)" class="form-control" autocomplete="on" value="@inputViewModel.Login" required />
+        }
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" for="DisplayName">@AuthenticateMobileResource.display_name</label>
+        <input id="DisplayName" name="@nameof(RegisterMobileViewModel.DisplayName)" class="form-control" autocomplete="on" required />
+    </div>
+
+    <div class="d-grid">
+        <button type="submit" class="btn btn-primary">@AuthenticateMobileResource.generate_qrcode</button>
+    </div>
+</form>
+
+<div id="qrCodeContainer" class="mt-4" style="display: none !important; text-align: center;">
+    <h5 class="mb-3">@AuthenticateMobileResource.scan_mobileapp</h5>
+    <div class="picture-container">
+        <img src="" class="img-fluid" alt="image" />
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_WorkflowAuthAsyncErrorScripts" />
+    <script type="text/javascript">
+        var isInitialized = false;
+        var init = function() {
+            var beginRegisterUrl = "@beginRegisterUrl";
+            var registerStatusUrl = "@registerStatusUrl";
+
+            var displayError = function(errorJson) {
+                window.sidWorkflowAuth.displayError(errorJson);
+            }
+
+            var displaySuccessMessage = function () {
+                window.sidWorkflowAuth.clearError();
+                $("#generateQrCodeForm").attr("style", "display: none !important");
+                $("#qrCodeContainer").attr("style", "display: none !important");
+            }
+
+            var displayQRCode = function (img, qrCode) {
+                $("#generateQrCodeForm").attr("style", "display: none !important");
+                $("#qrCodeContainer").css("display", "");
+                $("#qrCodeContainer img").attr("src", img);
+            }
+
+            async function checkStatus(sessionId, nextRegistrationRedirectUrl) {
+                setTimeout(async function(){
+                    let response = await fetch(registerStatusUrl + "/" + sessionId, {
+                        method: 'GET'
+                    });
+                    if (!response.ok) {
+                        let responseJson = await response.json();
+                        displayError(responseJson);
+                        await checkStatus(sessionId, nextRegistrationRedirectUrl);
+                        return;
+                    }
+
+                    if(nextRegistrationRedirectUrl) {
+                        window.location.href = nextRegistrationRedirectUrl;
+                    } else {
+                        displaySuccessMessage();
+                    }
+                }, 1000);
+            }
+
+            async function makeCredential(login, displayName, form) {
+                window.sidWorkflowAuth.clearError();
+                let response = await fetch(beginRegisterUrl, {
+                    method: 'POST',
+                    body: JSON.stringify({ login: login, display_name: displayName, credential_type: 'mobile' }),
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (!response.ok) {
+                    let responseJson = await response.json();
+                    displayError(responseJson);
+                    return;
+                }
+
+                const sessionId = response.headers.get('SessionId');
+                const qrCode = response.headers.get('QRCode');
+                let nextRegistrationRedirectUrl = response.headers.get('NextRegistrationRedirectUrl');
+                const blob = await response.blob();
+                const img = URL.createObjectURL(blob);
+                displayQRCode(img, qrCode);
+                await checkStatus(sessionId, nextRegistrationRedirectUrl);
+            };
+
+            var tryListenForm = function () {
+                const elt = $("#generateQrCodeForm");
+                if (isInitialized === true) return;
+                if (elt.length === 0) {
+                    setTimeout(() => tryListenForm(), 500);
+                    return;
+                }
+
+                isInitialized = true;
+                elt.submit(function (e) {
+                    e.preventDefault();
+                    var login = $("#generateQrCodeForm input[name='Login']").val();
+                    var displayName = $("#generateQrCodeForm input[name='DisplayName']").val();
+                    makeCredential(login, displayName, convertFormToJSON($(e.target)));
+                });
+            }
+
+            tryListenForm();
+        };
+
+        $(document).ready(function() {
+            init();
+        });
+    </script>
+}

@@ -1,0 +1,189 @@
+﻿@using FormBuilder.Helpers
+@using SimpleIdServer.IdServer.Fido
+@using SimpleIdServer.IdServer.Fido.UI.ViewModels
+@using SimpleIdServer.IdServer.Template.Startup.Resources
+@using SimpleIdServer.IdServer.UI.ViewModels
+@using System.Text.Json
+@model SidWorkflowViewModel
+
+@{
+    var vm = JsonSerializer.Deserialize<RegisterWebauthnViewModel>(Model.Input.ToString());
+    var returnUrl = Model.Input[nameof(ISidStepViewModel.ReturnUrl)]?.ToString() ?? string.Empty;
+}
+
+@section CardTop {
+    <partial name="_WorkflowAuthTitle" model="@AuthenticateWebauthnResource.register_title" />
+}
+
+<partial name="_WorkflowAuthAsyncError" />
+
+<div id="fido2Register">
+    <form id="webauthForm" asp-area="webauthn" asp-controller="Register" asp-action="Index" method="post">
+        @Html.AntiForgeryToken()
+
+        <input type="hidden" name="@nameof(ISidStepViewModel.ReturnUrl)" value="@returnUrl" />
+        <input type="hidden" name="@nameof(ISidStepViewModel.Realm)" value="@Model.Realm" />
+        <input type="hidden" name="@nameof(RegisterWebauthnViewModel.StepId)" value="@Model.CurrentStepId" />
+        <input type="hidden" name="@nameof(RegisterWebauthnViewModel.WorkflowId)" value="@Model.Workflow.Id" />
+        <input type="hidden" name="@nameof(RegisterWebauthnViewModel.CurrentLink)" value="@Model.Workflow.Links.Single(l => l.Source.EltId == StandardFidoRegisterForms.webauthnFormId).Id" />
+
+        <div class="mb-3">
+            <label class="form-label" for="Login">@AuthenticateWebauthnResource.login</label>
+            @if (!string.IsNullOrWhiteSpace(vm.Login) && User.Identity.IsAuthenticated)
+            {
+                <input id="Login" name="@nameof(RegisterWebauthnViewModel.Login)" class="form-control" value="@vm.Login" disabled />
+                <input type="hidden" name="@nameof(RegisterWebauthnViewModel.Login)" value="@vm.Login" />
+            }
+            else
+            {
+                <input id="Login" name="@nameof(RegisterWebauthnViewModel.Login)" class="form-control" autocomplete="on" value="@vm.Login" required />
+            }
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="DisplayName">@AuthenticateWebauthnResource.display_name</label>
+            <input id="DisplayName" name="@nameof(RegisterWebauthnViewModel.DisplayName)" class="form-control" autocomplete="on" required />
+        </div>
+
+        <div class="d-grid">
+            <button type="submit" class="btn btn-primary">@AuthenticateWebauthnResource.register</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_WorkflowAuthAsyncErrorScripts" />
+    <script type="text/javascript">
+        var init = function () {
+            var beginRegisterUrl = "@vm.BeginRegisterUrl";
+            var endRegisterUrl = "@vm.EndRegisterUrl";
+            var redirectUrl = "@vm.ReturnUrl";
+            var isInitialized = false;
+
+            var toggleBtn = function (isDisabled) {
+                $("#fido2Register button[type='submit']").attr('disabled', isDisabled);
+            }
+
+            var displayError = function (errorJson) {
+                window.sidWorkflowAuth.displayError(errorJson);
+            }
+
+            var displaySuccessMessage = function () {
+                window.sidWorkflowAuth.clearError();
+                $("#webauthForm").hide();
+            }
+
+            async function registerCredential(newCredential, sessionId, login, nextRegistrationRedirectUrl) {
+                let attestationObject = new Uint8Array(newCredential.response.attestationObject);
+                let clientDataJSON = new Uint8Array(newCredential.response.clientDataJSON);
+                let rawId = new Uint8Array(newCredential.rawId);
+                const serializedAuthenticatorAttestationRawResponse = {
+                    id: newCredential.id,
+                    rawId: coerceToBase64Url(rawId),
+                    type: newCredential.type,
+                    extensions: newCredential.getClientExtensionResults(),
+                    response: {
+                        attestationObject: coerceToBase64Url(attestationObject),
+                        clientDataJSON: coerceToBase64Url(clientDataJSON)
+                    }
+                };
+
+                let response = await fetch(endRegisterUrl, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        attestation: serializedAuthenticatorAttestationRawResponse,
+                        login: login,
+                        session_id: sessionId
+                    }),
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    }
+                });
+                let responseJson = await response.json();
+                if (!response.ok) {
+                    toggleBtn(false);
+                    displayError(responseJson);
+                    return;
+                }
+
+                if (nextRegistrationRedirectUrl) {
+                    window.location.href = nextRegistrationRedirectUrl;
+                    return;
+                }
+
+                displaySuccessMessage();
+            }
+
+            async function makeCredential(login, displayName) {
+                window.sidWorkflowAuth.clearError();
+                toggleBtn(true);
+                let response = await fetch(beginRegisterUrl, {
+                    method: 'POST',
+                    body: JSON.stringify({ login: login, display_name: displayName, credential_type: 'webauthn' }),
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    }
+                });
+                let responseJson = await response.json();
+                if (!response.ok) {
+                    toggleBtn(false);
+                    displayError(responseJson);
+                    return;
+                }
+
+                let makeCredentialOptions = responseJson["credential_create_options"];
+                let sessionId = responseJson["session_id"];
+                let nextRegistrationRedirectUrl = null;
+                if (responseJson['next_registration_redirect_url']) {
+                    nextRegistrationRedirectUrl = responseJson['next_registration_redirect_url'];
+                }
+
+                makeCredentialOptions.challenge = coerceToArrayBuffer(makeCredentialOptions.challenge);
+                makeCredentialOptions.user.id = coerceToArrayBuffer(makeCredentialOptions.user.id);
+                makeCredentialOptions.excludeCredentials = makeCredentialOptions.excludeCredentials.map((c) => {
+                    c.id = coerceToArrayBuffer(c.id);
+                    return c;
+                });
+                if (makeCredentialOptions.authenticatorSelection.authenticatorAttachment === null) makeCredentialOptions.authenticatorSelection.authenticatorAttachment = undefined;
+                let newCredential;
+                try {
+                    newCredential = await navigator.credentials.create({
+                        publicKey: makeCredentialOptions
+                    });
+                } catch (e) {
+                    var msg = "Could not create credentials in browser. Probably because the username is already registered with your authenticator. Please change username or authenticator."
+                    console.error(msg, e);
+                    toggleBtn(false);
+                    return;
+                }
+
+                await registerCredential(newCredential, sessionId, login, nextRegistrationRedirectUrl);
+            };
+
+            var tryListenForm = function () {
+                const elt = $("#webauthForm");
+                if (isInitialized === true) return;
+                if (elt.length === 0) {
+                    setTimeout(() => tryListenForm(), 500);
+                    return;
+                }
+
+                isInitialized = true;
+                elt.submit(function (e) {
+                    e.preventDefault();
+                    var login = $("#webauthForm input[name='Login']").val();
+                    var displayName = $("#webauthForm input[name='DisplayName']").val();
+                    makeCredential(login, displayName);
+                });
+            }
+
+            tryListenForm();
+        };
+
+        $(document).ready(function () {
+            init();
+        });
+    </script>
+}
